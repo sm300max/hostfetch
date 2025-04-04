@@ -1,5 +1,0 @@
-# This directory is a Syncthing folder marker.
-# Do not delete.
-
-folderID: vrbuv-zqavn
-created: 2025-04-02T22:22:11+03:00
