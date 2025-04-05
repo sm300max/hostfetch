@@ -46,7 +46,7 @@ impl Default for Color {
 }
 
 pub fn load_or_create() -> Result<Config, Box<dyn std::error::Error>> {
-    let mut config_path = dirs::home_dir()
+    let config_path = dirs::home_dir()
         .ok_or("Home directory not found")?
         .join(".config")
         .join("hostfetch")

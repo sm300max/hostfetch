@@ -1,4 +1,5 @@
 mod hostname;
+mod username;
 mod config;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
