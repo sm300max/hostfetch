@@ -1,79 +1,70 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use dirs;
 use colored::{Color, ColoredString, Colorize};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Config {
-    pub host: ColorConfig,
-    pub position: Position,
-    pub color: ColorForInfo,
+pub trait Stylize {
+    fn style(self, styles: &[String]) -> ColoredString;
+}
+
+impl Stylize for ColoredString {
+    fn style(mut self, styles: &[String]) -> ColoredString {
+        for style in styles {
+            self = match style.to_lowercase().as_str() {
+                "bold" => self.bold(),
+                "italic" => self.italic(),
+                "underline" => self.underline(),
+                "dimmed" => self.dimmed(),
+                "blink" => self.blink(),
+                "reverse" => self.reversed(),
+                _ => self,
+            };
+        }
+        self
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ColorConfig {
-    pub host_color: String,
+pub struct Config {
+    pub host: HostStyle,
+    pub position: Position,
+    pub info: InfoStyle,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HostStyle {
+    pub color: String,
     #[serde(default)]
-    pub style: Vec<String>,
+    pub styles: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Position {
-    pub hostname: u32,
+    pub hostname_order: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ColorForInfo {
+pub struct InfoStyle {
     pub main_color: String,
     #[serde(default)]
-    pub main_style: Vec<String>,
-    pub info_color: String,
+    pub main_styles: Vec<String>,
+    pub secondary_color: String,
     #[serde(default)]
-    pub info_style: Vec<String>,
+    pub secondary_styles: Vec<String>,
 }
 
 impl Config {
-    pub fn format_host(&self, text: &str) -> ColoredString {
-        let color = self.get_color("host_color");
-        self.apply_style(text.color(color), &self.host.style)
+    pub fn get_host_color(&self) -> Color {
+        self.parse_color(&self.host.color)
     }
 
-    pub fn format_main_info(&self, text: &str) -> ColoredString {
-        let color = self.get_color("main");
-        self.apply_style(text.color(color), &self.color.main_style)
+    pub fn get_host_styles(&self) -> &Vec<String> {
+        &self.host.styles
     }
 
-    pub fn format_secondary_info(&self, text: &str) -> ColoredString {
-        let color = self.get_color("info");
-        self.apply_style(text.color(color), &self.color.info_style)
-    }
-
-    fn apply_style(&self, text: ColoredString, styles: &[String]) -> ColoredString {
-        styles.iter().fold(text, |acc, style| {
-            match style.to_lowercase().as_str() {
-                "bold" => acc.bold(),
-                "italic" => acc.italic(),
-                "underline" => acc.underline(),
-                "dimmed" => acc.dimmed(),
-                _ => acc,
-            }
-        })
-    }
-
-    pub fn get_color(&self, color_type: &str) -> Color {
-        let color_str = match color_type {
-            "host_color" => self.host.host_color.as_str(),
-            "main" => self.color.main_color.as_str(),
-            "info" => self.color.info_color.as_str(),
-            _ => "white",
-        };
-
+    fn parse_color(&self, color_str: &str) -> Color {
         if let Some(rgb) = Self::parse_hex(color_str) {
-            return Color::TrueColor {
-                r: rgb.0,
-                g: rgb.1,
-                b: rgb.2
-            };
+            return Color::TrueColor { r: rgb.0, g: rgb.1, b: rgb.2 };
         }
 
         match color_str.to_lowercase().as_str() {
@@ -99,7 +90,7 @@ impl Config {
 
     fn parse_hex(hex: &str) -> Option<(u8, u8, u8)> {
         let hex = hex.trim_start_matches('#');
-
+        
         match hex.len() {
             3 => {
                 let r = u8::from_str_radix(&hex[0..1], 16).ok()?;
@@ -121,37 +112,19 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            host: ColorConfig::default(),
-            position: Position::default(),
-            color: ColorForInfo::default(),
-        }
-    }
-}
-
-impl Default for ColorConfig {
-    fn default() -> Self {
-        Self {
-            host_color: "magenta".into(),
-            style: Vec::new(),
-        }
-    }
-}
-
-impl Default for Position {
-    fn default() -> Self {
-        Self {
-            hostname: 1,
-        }
-    }
-}
-
-impl Default for ColorForInfo {
-    fn default() -> Self {
-        Self {
-            main_color: "none".into(),
-            main_style: Vec::new(),
-            info_color: "blue".into(),
-            info_style: Vec::new(),
+            host: HostStyle {
+                color: "magenta".into(),
+                styles: vec!["bold".into()],
+            },
+            position: Position {
+                hostname_order: 1,
+            },
+            info: InfoStyle {
+                main_color: "cyan".into(),
+                main_styles: vec!["italic".into()],
+                secondary_color: "blue".into(),
+                secondary_styles: vec!["bold".into()],
+            },
         }
     }
 }
@@ -168,26 +141,20 @@ pub fn load_or_create() -> Result<Config, Box<dyn std::error::Error>> {
     }
 
     if !config_path.exists() {
-        let toml_content = r#"# All available colors: black, red, green, yellow, blue, magenta, cyan, white, 
-# bright_black, bright_red, bright_green, bright_yellow, bright_blue, 
-# bright_magenta, bright_cyan, bright_white. 
-
-# Available styles: bold, italic, underline, dimmed
-# HEX colors: #RGB or #RRGGBB
-
+        let toml_content = r#"
 [host]
-host_color = "magenta"  # Host color
-style = ["bold"]        # Host styles
+color = "magenta"
+styles = ["bold"]
 
 [position]
-hostname = 1 
+hostname_order = 1
 
-[color]
-main_color = "none"     # Main info color
-main_style = ["italic"] # Main info styles
-info_color = "blue"     # Secondary info color
-info_style = ["bold"] # Secondary info styles
-"#;
+[info]
+main_color = "cyan"
+main_styles = ["italic"]
+secondary_color = "blue"
+secondary_styles = ["bold"]
+        "#;
 
         fs::write(&config_path, toml_content)?;
     }

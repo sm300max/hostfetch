@@ -1,45 +1,36 @@
-use colored::Colorize;
-
+mod config;
 mod hostname;
 mod username;
-mod config;
+
+use colored::Colorize;
+use config::{load_or_create, Stylize};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-	let mut  my_host = String::new();
+    let mut my_host = String::new();
+    let cfg = load_or_create()?;
 
-	let cfg = match config::load_or_create() {
-		Ok(c) => c,
-		Err(e) => {
-			eprintln!("Error while loading config: {}", e);
-			return Ok(());
-		}
-	};
+	let host_color = cfg.get_host_color();
+    let host_styles = cfg.get_host_styles();
 
-	let user_host_color = cfg.get_color("host_color");
+    let username = match username::get_username() {
+        Ok(name) => name,
+        Err(e) => {
+            eprintln!("Error getting username: {}", e);
+            "unknown".to_string()
+        }
+    };
 
-	let username = match username::get_username() {
-		Ok(name) => name,
-		Err(e) => {
-			eprintln!("Error while getting username: {}", e);
-			"unknown".to_string()
-		}
-	};
+    match hostname::get_hostname(&mut my_host) {
+        Ok(()) => println!(
+            "{}@{}", 
+            username.color(host_color).style(host_styles),
+            my_host.color(host_color).style(host_styles)
+        ),
+        Err(e) => eprintln!("Error getting hostname: {}", e),
+    }
 
-	match hostname::get_hostname(&mut my_host) {
-		Ok(()) => println!("{}@{}", username.color(user_host_color).bold(), my_host.color(user_host_color).bold()),
-		_ => eprintln!("Error"),
-	}
+    let separator = "-".repeat(username.len() + my_host.len() + 1);
+    println!("{}", separator.color(host_color));
 
-	let user_host_len = username.len() + my_host.len() + 1;
-
-	for _i in 1..user_host_len {
-		print!("-");
-	}
-	println!("");
-
-	println!("hostname position: {}", cfg.position.hostname);
-	println!("main color: {}", cfg.color.main_color);
-	println!("info color: {}", cfg.color.info_color);
-
-	Ok(())
+    Ok(())
 }
