@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		}
 	};
 
-	let mut user_host_color = cfg.get_color("host_color");
+	let user_host_color = cfg.get_color("host_color");
 
 	let username = match username::get_username() {
 		Ok(name) => name,

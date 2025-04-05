@@ -35,6 +35,14 @@ impl Config {
             _ => "white",
         };
 
+        if let Some(rgb) = Self::parse_hex(color_str) {
+            return Color::TrueColor {
+                r: rgb.0,
+                g: rgb.1,
+                b: rgb.2
+            };
+        }
+
         match color_str.to_lowercase().as_str() {
             "black" => Color::Black,
             "red" => Color::Red,
@@ -53,6 +61,26 @@ impl Config {
             "bright_cyan" => Color::BrightCyan,
             "bright_white" => Color::BrightWhite,
             _ => Color::White,
+        }
+    }
+
+    fn parse_hex(hex: &str) -> Option<(u8, u8, u8)> {
+        let hex = hex.trim_start_matches('#');
+
+        match hex.len() {
+            3 => {
+                let r = u8::from_str_radix(&hex[0..1], 16).ok()?;
+                let g = u8::from_str_radix(&hex[1..2], 16).ok()?;
+                let b = u8::from_str_radix(&hex[2..3], 16).ok()?;
+                Some((r * 17, g * 17, b * 17))
+            }
+            6 => {
+                let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+                let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+                let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+                Some((r, g, b))
+            }
+            _ => None,
         }
     }
 }
