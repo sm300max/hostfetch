@@ -1,3 +1,4 @@
 .stfolder/
-target/debug/deps/
+hostfetch/target/
+
 
