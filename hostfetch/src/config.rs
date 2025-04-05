@@ -7,7 +7,7 @@ use colored::Color;
 pub struct Config {
     pub host: ColorConfig,
     pub position: Position,
-    pub color: ColorForInfo,   
+    pub color: ColorForInfo,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,13 +27,14 @@ pub struct ColorForInfo {
 }
 
 impl Config {
-
     pub fn get_color(&self, color_type: &str) -> Color {
         let color_str = match color_type {
             "host_color" => self.host.host_color.as_str(),
+            "main" => self.color.main_color.as_str(),
+            "info" => self.color.info_color.as_str(),
             _ => "white",
         };
-    
+
         match color_str.to_lowercase().as_str() {
             "black" => Color::Black,
             "red" => Color::Red,
@@ -51,7 +52,7 @@ impl Config {
             "bright_magenta" => Color::BrightMagenta,
             "bright_cyan" => Color::BrightCyan,
             "bright_white" => Color::BrightWhite,
-            _ => Color::White, 
+            _ => Color::White,
         }
     }
 }
@@ -103,9 +104,22 @@ pub fn load_or_create() -> Result<Config, Box<dyn std::error::Error>> {
     }
 
     if !config_path.exists() {
-        let default_config = Config::default();
-        let toml = toml::to_string_pretty(&default_config)?;
-        fs::write(&config_path, toml)?;
+        let toml_content = r#"# All available colors: black, red, green, yellow, blue, magenta, cyan, white, 
+# bright_black, bright_red, bright_green, bright_yellow, bright_blue, 
+# bright_magenta, bright_cyan, bright_white. 
+
+[host]
+host_color = "magenta"  # Color for hostname display
+
+[position]
+hostname = 1 
+
+[color]
+main_color = "none" 
+info_color = "blue"
+"#;
+
+        fs::write(&config_path, toml_content)?;
     }
 
     let content = fs::read_to_string(config_path)?;

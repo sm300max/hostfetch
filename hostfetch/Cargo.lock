@@ -76,6 +76,7 @@ dependencies = [
  "libc",
  "serde",
  "toml",
+ "toml_edit",
 ]
 
 [[package]]
