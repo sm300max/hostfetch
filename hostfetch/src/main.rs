@@ -15,6 +15,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		}
 	};
 
+	let mut user_host_color = cfg.get_color("host_color");
+
 	let username = match username::get_username() {
 		Ok(name) => name,
 		Err(e) => {
@@ -24,12 +26,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	};
 
 	match hostname::get_hostname(&mut my_host) {
-		Ok(()) => println!("{}@{}", username.magenta().bold(), my_host.magenta().bold()),
+		Ok(()) => println!("{}@{}", username.color(user_host_color).bold(), my_host.color(user_host_color).bold()),
 		_ => eprintln!("Error"),
 	}
 
 	let user_host_len = username.len() + my_host.len() + 1;
-	
+
 	for _i in 1..user_host_len {
 		print!("-");
 	}

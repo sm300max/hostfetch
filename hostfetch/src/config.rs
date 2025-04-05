@@ -1,11 +1,18 @@
 use serde::{Serialize, Deserialize};
 use std::fs;
 use dirs;
+use colored::Color;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
+    pub host: ColorConfig,
     pub position: Position,
-    pub color: Color,
+    pub color: ColorForInfo,   
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ColorConfig {
+    pub host_color: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -14,16 +21,55 @@ pub struct Position {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Color {
+pub struct ColorForInfo {
     pub main_color: String,
     pub info_color: String,
+}
+
+impl Config {
+
+    pub fn get_color(&self, color_type: &str) -> Color {
+        let color_str = match color_type {
+            "host_color" => self.host.host_color.as_str(),
+            _ => "white",
+        };
+    
+        match color_str.to_lowercase().as_str() {
+            "black" => Color::Black,
+            "red" => Color::Red,
+            "green" => Color::Green,
+            "yellow" => Color::Yellow,
+            "blue" => Color::Blue,
+            "magenta" => Color::Magenta,
+            "cyan" => Color::Cyan,
+            "white" => Color::White,
+            "bright_black" => Color::BrightBlack,
+            "bright_red" => Color::BrightRed,
+            "bright_green" => Color::BrightGreen,
+            "bright_yellow" => Color::BrightYellow,
+            "bright_blue" => Color::BrightBlue,
+            "bright_magenta" => Color::BrightMagenta,
+            "bright_cyan" => Color::BrightCyan,
+            "bright_white" => Color::BrightWhite,
+            _ => Color::White, 
+        }
+    }
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
+            host: ColorConfig::default(),
             position: Position::default(),
-            color: Color::default(),
+            color: ColorForInfo::default(),
+        }
+    }
+}
+
+impl Default for ColorConfig {
+    fn default() -> Self {
+        Self {
+            host_color: "magenta".into(),
         }
     }
 }
@@ -36,7 +82,7 @@ impl Default for Position {
     }
 }
 
-impl Default for Color {
+impl Default for ColorForInfo {
     fn default() -> Self {
         Self {
             main_color: "none".into(),
