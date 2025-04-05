@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::fs;
 use dirs;
-use colored::Color;
+use colored::{Color, ColoredString, Colorize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -13,6 +13,8 @@ pub struct Config {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColorConfig {
     pub host_color: String,
+    #[serde(default)]
+    pub style: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,10 +25,41 @@ pub struct Position {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColorForInfo {
     pub main_color: String,
+    #[serde(default)]
+    pub main_style: Vec<String>,
     pub info_color: String,
+    #[serde(default)]
+    pub info_style: Vec<String>,
 }
 
 impl Config {
+    pub fn format_host(&self, text: &str) -> ColoredString {
+        let color = self.get_color("host_color");
+        self.apply_style(text.color(color), &self.host.style)
+    }
+
+    pub fn format_main_info(&self, text: &str) -> ColoredString {
+        let color = self.get_color("main");
+        self.apply_style(text.color(color), &self.color.main_style)
+    }
+
+    pub fn format_secondary_info(&self, text: &str) -> ColoredString {
+        let color = self.get_color("info");
+        self.apply_style(text.color(color), &self.color.info_style)
+    }
+
+    fn apply_style(&self, text: ColoredString, styles: &[String]) -> ColoredString {
+        styles.iter().fold(text, |acc, style| {
+            match style.to_lowercase().as_str() {
+                "bold" => acc.bold(),
+                "italic" => acc.italic(),
+                "underline" => acc.underline(),
+                "dimmed" => acc.dimmed(),
+                _ => acc,
+            }
+        })
+    }
+
     pub fn get_color(&self, color_type: &str) -> Color {
         let color_str = match color_type {
             "host_color" => self.host.host_color.as_str(),
@@ -99,6 +132,7 @@ impl Default for ColorConfig {
     fn default() -> Self {
         Self {
             host_color: "magenta".into(),
+            style: Vec::new(),
         }
     }
 }
@@ -115,7 +149,9 @@ impl Default for ColorForInfo {
     fn default() -> Self {
         Self {
             main_color: "none".into(),
+            main_style: Vec::new(),
             info_color: "blue".into(),
+            info_style: Vec::new(),
         }
     }
 }
@@ -136,15 +172,21 @@ pub fn load_or_create() -> Result<Config, Box<dyn std::error::Error>> {
 # bright_black, bright_red, bright_green, bright_yellow, bright_blue, 
 # bright_magenta, bright_cyan, bright_white. 
 
+# Available styles: bold, italic, underline, dimmed
+# HEX colors: #RGB or #RRGGBB
+
 [host]
-host_color = "magenta"  # Color for hostname display
+host_color = "magenta"  # Host color
+style = ["bold"]        # Host styles
 
 [position]
 hostname = 1 
 
 [color]
-main_color = "none" 
-info_color = "blue"
+main_color = "none"     # Main info color
+main_style = ["italic"] # Main info styles
+info_color = "blue"     # Secondary info color
+info_style = ["bold"] # Secondary info styles
 "#;
 
         fs::write(&config_path, toml_content)?;
