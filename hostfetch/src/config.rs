@@ -54,6 +54,22 @@ pub struct InfoStyle {
 }
 
 impl Config {
+    pub fn get_main_color(&self) -> Color {
+        self.parse_color(&self.info.main_color)
+    }
+
+    pub fn get_main_styles(&self) -> &Vec<String> {
+        &self.info.main_styles
+    }
+
+    pub fn get_secondary_color(&self) -> Color {
+        self.parse_color(&self.info.secondary_color)
+    }
+
+    pub fn get_secondary_styles(&self) -> &Vec<String> {
+        &self.info.secondary_styles
+    }
+
     pub fn get_host_color(&self) -> Color {
         self.parse_color(&self.host.color)
     }
