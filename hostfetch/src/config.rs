@@ -138,7 +138,7 @@ impl Default for Config {
                 hostname_order: 1,
             },
             info: InfoStyle {
-                main_color: "cyan".into(),
+                main_color: "white".into(),
                 main_styles: vec!["italic".into()],
                 secondary_color: "blue".into(),
                 secondary_styles: vec!["bold".into()],
@@ -168,7 +168,7 @@ styles = ["bold"]
 hostname_order = 1
 
 [info]
-main_color = "cyan"
+main_color = "white"
 main_styles = ["italic"]
 secondary_color = "blue"
 secondary_styles = ["bold"]

@@ -16,22 +16,23 @@ pub fn get_os_info() -> io::Result<String> {
 
 fn detect_android() -> Option<String> {
     if Path::new("/system/build.prop").exists() {
-        if let Ok(content) = fs::read_to_string("/system/build.prop") {
-
-            let version = content.lines()
+        let content = fs::read_to_string("/system/build.prop").ok();
+        let version = content.as_ref().and_then(|c| {
+            c.lines()
                 .find(|l| l.starts_with("ro.build.version.release="))
                 .and_then(|l| l.split('=').nth(1))
                 .map(|v| v.trim().trim_matches('"'))
-                .filter(|s| !s.is_empty());
+                .filter(|s| !s.is_empty())
+        });
 
-            return Some(match version {
-                Some(v) => format!("Android {}", v),
-                None => "Android".to_string(),
-            });
-        }
+        return Some(match version {
+            Some(v) => format!("Android {}", v),
+            None => "Android".to_string(),
+        });
     }
     None
 }
+
 
 fn try_read_file(path: &str) -> io::Result<String> {
     if !Path::new(path).exists() {
