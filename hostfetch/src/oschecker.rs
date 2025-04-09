@@ -15,24 +15,43 @@ pub fn get_os_info() -> io::Result<String> {
 }
 
 fn detect_android() -> Option<String> {
-    if Path::new("/system/build.prop").exists() {
-        let content = fs::read_to_string("/system/build.prop").ok();
-        let version = content.as_ref().and_then(|c| {
-            c.lines()
-                .find(|l| l.starts_with("ro.build.version.release="))
-                .and_then(|l| l.split('=').nth(1))
-                .map(|v| v.trim().trim_matches('"'))
-                .filter(|s| !s.is_empty())
-        });
+    let is_android = Path::new("/system/build.prop").exists()
+        || Path::new("/android-root").exists()
+        || cfg!(target_os = "android");
 
-        return Some(match version {
-            Some(v) => format!("Android {}", v),
-            None => "Android".to_string(),
-        });
+    if !is_android {
+        return None;
     }
-    None
+
+    let version = try_android_version()
+        .or_else(|| try_adb_prop())
+        .unwrap_or_else(|| "".to_string());
+
+    Some(if version.is_empty() {
+        "Android".to_string()
+    } else {
+        format!("Android {}", version)
+    })
 }
 
+fn try_android_version() -> Option<String> {
+    read_prop_file("/system/build.prop", "ro.build.version.release")
+        .or_else(|| read_prop_file("/default.prop", "ro.build.version.release"))
+}
+
+fn try_adb_prop() -> Option<String> {
+    read_prop_file("/system/etc/prop.default", "ro.build.version.release")
+}
+
+fn read_prop_file(path: &str, key: &str) -> Option<String> {
+    fs::read_to_string(path).ok().and_then(|content| {
+        content.lines()
+            .find(|l| l.starts_with(key))
+            .and_then(|l| l.splitn(2, '=').nth(1))
+            .map(|v| v.trim().trim_matches('"').to_string())
+            .filter(|s| !s.is_empty())
+    })
+}
 
 fn try_read_file(path: &str) -> io::Result<String> {
     if !Path::new(path).exists() {
