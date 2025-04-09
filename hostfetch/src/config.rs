@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use dirs;
-use colored::{Color, ColoredString, Colorize};
+use colored::ColoredString;
+use colored::Colorize;
+use colored::Color;
 
 pub trait Stylize {
     fn style(self, styles: &[String]) -> ColoredString;

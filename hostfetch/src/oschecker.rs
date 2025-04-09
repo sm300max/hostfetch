@@ -3,11 +3,34 @@ use std::io;
 use std::path::Path;
 
 pub fn get_os_info() -> io::Result<String> {
+    if let Some(android_info) = detect_android() {
+        return Ok(android_info);
+    }
+
     try_read_file("/etc/os-release")
         .or_else(|_| try_read_file("/usr/lib/os-release"))
         .or_else(|_| try_read_file("/etc/lsb-release"))
         .or_else(|_| try_read_legacy_debian())
         .or(Ok("Unknown Linux".to_string()))
+}
+
+fn detect_android() -> Option<String> {
+    if Path::new("/system/build.prop").exists() {
+        if let Ok(content) = fs::read_to_string("/system/build.prop") {
+
+            let version = content.lines()
+                .find(|l| l.starts_with("ro.build.version.release="))
+                .and_then(|l| l.split('=').nth(1))
+                .map(|v| v.trim().trim_matches('"'))
+                .filter(|s| !s.is_empty());
+
+            return Some(match version {
+                Some(v) => format!("Android {}", v),
+                None => "Android".to_string(),
+            });
+        }
+    }
+    None
 }
 
 fn try_read_file(path: &str) -> io::Result<String> {
