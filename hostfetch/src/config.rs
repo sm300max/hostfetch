@@ -31,6 +31,7 @@ pub struct Config {
     pub host: HostStyle,
     pub position: Position,
     pub info: InfoStyle,
+    pub icons: IconStyle,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -42,7 +43,8 @@ pub struct HostStyle {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Position {
-    pub hostname_order: u32,
+    pub os_order: u8,
+    pub host_order: u8
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,6 +55,12 @@ pub struct InfoStyle {
     pub secondary_color: String,
     #[serde(default)]
     pub secondary_styles: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct IconStyle {
+    pub enabled: bool,
+    pub color: String,
 }
 
 impl Config {
@@ -78,6 +86,14 @@ impl Config {
 
     pub fn get_host_styles(&self) -> &Vec<String> {
         &self.host.styles
+    }
+
+    pub fn get_icon_color(&self) -> Color {
+        self.parse_color(&self.icons.color)
+    }
+
+    pub fn icons_enabled(&self) -> bool {
+        self.icons.enabled
     }
 
     fn parse_color(&self, color_str: &str) -> Color {
@@ -135,7 +151,8 @@ impl Default for Config {
                 styles: vec!["bold".into()],
             },
             position: Position {
-                hostname_order: 1,
+                os_order: 1,
+                host_order: 2
             },
             info: InfoStyle {
                 main_color: "white".into(),
@@ -143,6 +160,10 @@ impl Default for Config {
                 secondary_color: "blue".into(),
                 secondary_styles: vec!["bold".into()],
             },
+            icons: IconStyle {
+                color: "green".into(),
+                enabled: true,
+            }
         }
     }
 }
@@ -165,14 +186,19 @@ color = "magenta"
 styles = ["bold"]
 
 [position]
-hostname_order = 1
+os_order = 1
+host_order = 2
 
 [info]
 main_color = "white"
 main_styles = ["italic"]
 secondary_color = "blue"
 secondary_styles = ["bold"]
-        "#;
+
+[icons]
+enabled = true
+color = "green"
+"#;
 
         fs::write(&config_path, toml_content)?;
     }

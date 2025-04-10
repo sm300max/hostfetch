@@ -2,22 +2,38 @@ mod config;
 mod hostname;
 mod username;
 mod oschecker;
+mod host;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
+use host::get_device_name;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut my_host = String::new();
     let cfg = load_or_create()?;
+
+    let os_icon = if cfg.icons_enabled() {
+        "\u{f31a} "
+    } else {
+        ""
+    };
+
+    let host_icon = if cfg.icons_enabled() {
+        "\u{f109} "
+    } else {
+        ""
+    };
+
+    let host = get_device_name();
+
+    let mut my_host = String::new();
 
     let main_color = cfg.get_main_color();
     let main_style = cfg.get_main_styles();
-
     let info_color = cfg.get_secondary_color();
     let info_style = cfg.get_secondary_styles();
-
 	let host_color = cfg.get_host_color();
     let host_styles = cfg.get_host_styles();
+    let icon_color = cfg.get_icon_color();
 
     let os_info: String = oschecker::get_os_info()?;
 
@@ -41,7 +57,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let separator = "-".repeat(username.len() + my_host.len() + 1);
     println!("{}", separator.color(host_color));
 
-    println!("{}: {}", "OS".color(main_color).style(main_style), os_info.color(info_color).style(info_style));
+    let os_line = format!("{}{}:    {}",os_icon.color(icon_color), "OS".color(main_color).style(main_style), os_info.color(info_color).style(info_style));
+
+    let host_line = format!("{}{}:  {}", host_icon.color(icon_color), "Host".color(main_color).style(main_style), host.color(info_color).style(info_style));
+
+    let mut items = vec![
+        (cfg.position.host_order, host_line),
+        (cfg.position.os_order, os_line),
+    ];
+
+    items.retain(|(order, _)| *order > 0);
+    items.sort_by_key(|(order, _)| *order);
+
+    for (_, line) in &items {
+        println!("{}", line);
+    }
 
     Ok(())
 }
