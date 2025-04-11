@@ -3,127 +3,103 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn get_device_info() -> String {
-    let (vendor, product) = get_device_info_components();
-    
-    match (vendor, product) {
-        (Some(v), Some(p)) => {
-            if p.starts_with(&v) {
-                p
-            } else {
-                format!("{} {}", v, p)
-            }
-        }
-        (Some(v), None) => v,
-        (None, Some(p)) => p,
-        _ => "Unknown Device".to_string()
-    }
-}
+    let mut result = String::new();
 
-fn get_device_info_components() -> (Option<String>, Option<String>) {
-    let sources: [fn() -> (Option<String>, Option<String>); 6] = [
-        || {
-            let vendor = getprop("ro.product.manufacturer");
-            let product = getprop("ro.product.model");
-            (vendor, product)
-        },
-        
-        || {
-            let vendor = read_dmi("sys_vendor")
-                .or_else(|| read_dmi("board_vendor"));
-            
-            let product = read_dmi("product_name")
-                .or_else(|| read_dmi("product_version"));
-            
-            (vendor, product)
-        },
-        
-        || {
-            if let Some((v, p)) = read_device_tree() {
-                (v, Some(p))
-            } else {
-                (None, None)
-            }
-        },
-        
-        || {
-            let mut vendor = None;
-            let mut product = None;
-            
-            for path in &["/system/build.prop", "/vendor/build.prop"] {
-                if let Ok(content) = fs::read_to_string(path) {
-                    for line in content.lines() {
-                        if line.starts_with("ro.product.manufacturer=") && vendor.is_none() {
-                            vendor = line.split('=').nth(1).map(cleanup_string);
-                        }
-                        if line.starts_with("ro.product.model=") && product.is_none() {
-                            product = line.split('=').nth(1).map(cleanup_string);
-                        }
-                    }
-                }
-            }
-            (vendor, product)
-        },
-        
-        || {
-            if let Ok(cpuinfo) = fs::read_to_string("/proc/cpuinfo") {
-                let hardware = cpuinfo.lines()
-                    .find(|l| l.starts_with("Hardware"))
-                    .and_then(|l| l.split(':').nth(1))
-                    .map(cleanup_string);
-                
-                let model = cpuinfo.lines()
-                    .find(|l| l.starts_with("model name"))
-                    .and_then(|l| l.split(':').nth(1))
-                    .map(cleanup_string);
-                
-                (hardware, model)
-            } else {
-                (None, None)
-            }
-        },
-        
-        || {
-            let board_name = read_sys_file("/sys/class/dmi/id/board_name");
-            let product_name = read_sys_file("/sys/devices/virtual/dmi/id/product_name");
-            (board_name, product_name)
-        }
+    let detectors: [&dyn Fn() -> Option<String>; 7] = [
+        &detect_android_marketing_name,
+        &detect_dmi_product_name,
+        &detect_device_tree_model,
+        &detect_android_model,
+        &detect_board_name,
+        &detect_cpu_hardware,
+        &detect_product_version,
     ];
 
-    for source in &sources {
-        let (vendor, product) = source();
-        if vendor.is_some() || product.is_some() {
-            return (vendor, product);
+    for detector in &detectors {
+        if let Some(name) = detector() {
+            result = normalize_device_name(&name);
+            break;
         }
     }
-    
-    (None, None)
-}
 
-fn read_device_tree() -> Option<(Option<String>, String)> {
-    let dt_model = read_sys_file("/proc/device-tree/model")
-        .or_else(|| read_sys_file("/sys/firmware/devicetree/base/model"))?;
-
-    let cleaned = dt_model
-        .replace('\0', "")
-        .trim()
-        .to_string();
-
-    if let Some((vendor, model)) = cleaned.split_once(' ') {
-        let vendor_clean = vendor
-            .trim_start_matches("Raspberry Pi")
-            .trim()
-            .to_string();
-        
-        return Some((
-            Some(vendor_clean),
-            model.trim().to_string()
-        ));
+    if result.is_empty() {
+        result = "Unknown Device".to_string();
     }
-    
-    Some((None, cleaned))
+
+    result
 }
 
-fn getprop(prop: &str) -> Option<String> {
+fn normalize_device_name(name: &str) -> String {
+    name.trim()
+        .replace('\0', "")
+        .replace("Not Specified", "")
+        .replace("Not Applicable", "")
+        .replace("Default string", "")
+        .replace("System Product Name", "")
+        .replace("To be filled by O.E.M.", "")
+        .trim()
+        .to_string()
+}
+
+fn detect_android_marketing_name() -> Option<String> {
+    get_property("ro.product.marketname")
+        .or_else(|| get_property("ro.product.vendor.marketname"))
+        .or_else(|| get_property("ro.product.odm.marketname"))
+}
+
+fn detect_dmi_product_name() -> Option<String> {
+    read_dmi_field("product_name")
+        .or_else(|| read_dmi_field("product_version"))
+}
+
+fn detect_device_tree_model() -> Option<String> {
+    read_sys_file("/proc/device-tree/model")
+        .or_else(|| read_sys_file("/sys/firmware/devicetree/base/model"))
+}
+
+fn detect_android_model() -> Option<String> {
+    get_property("ro.product.model")
+        .or_else(|| get_property("ro.product.vendor.model"))
+        .or_else(|| get_property("ro.product.odm.model"))
+}
+
+fn detect_board_name() -> Option<String> {
+    read_dmi_field("board_name")
+}
+
+fn detect_cpu_hardware() -> Option<String> {
+    read_sys_file("/proc/cpuinfo")
+        .and_then(|content| {
+            content.lines()
+                .find(|l| l.starts_with("Hardware") || l.starts_with("model name"))
+                .and_then(|l| l.split(':').nth(1))
+                .map(str::trim)
+                .map(|s| s.to_string()) // Исправлено здесь
+        })
+}
+
+fn detect_product_version() -> Option<String> {
+    read_dmi_field("product_version")
+}
+
+fn read_dmi_field(field: &str) -> Option<String> {
+    let paths = [
+        format!("/sys/class/dmi/id/{}", field),
+        format!("/sys/devices/virtual/dmi/id/{}", field),
+    ];
+
+    paths.iter()
+        .find_map(|path| read_sys_file(path))
+}
+
+fn read_sys_file<P: AsRef<Path>>(path: P) -> Option<String> {
+    fs::read_to_string(path)
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
+fn get_property(prop: &str) -> Option<String> {
     Command::new("getprop")
         .arg(prop)
         .output()
@@ -131,25 +107,4 @@ fn getprop(prop: &str) -> Option<String> {
         .and_then(|o| String::from_utf8(o.stdout).ok())
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
-        .map(|s| s.replace("_", " "))  // Нормализуем пробелы
-}
-
-fn read_dmi(field: &str) -> Option<String> {
-    let path = format!("/sys/class/dmi/id/{}", field);
-    read_sys_file(path)
-        .or_else(|| read_sys_file(format!("/sys/devices/virtual/dmi/id/{}", field)))
-}
-
-fn read_sys_file<P: AsRef<Path>>(path: P) -> Option<String> {
-    fs::read_to_string(path)
-        .ok()
-        .map(|s| cleanup_string(&s))
-}
-
-fn cleanup_string(s: &str) -> String {
-    s.trim()
-        .replace("\\n", "")
-        .replace('\0', "")
-        .trim()
-        .to_string()
 }
