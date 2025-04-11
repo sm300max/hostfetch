@@ -6,7 +6,7 @@ mod host;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
-use host::get_device_name;
+use host::get_device_info;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = load_or_create()?;
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
-    let host = get_device_name();
+    let host = get_device_info();
 
     let mut my_host = String::new();
 
