@@ -44,8 +44,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let os_info: String = oschecker::get_os_info()?;
 
-    let kernel = kernel::get_kernel_version()
-        .unwrap_or_else(|e| format!("Unknown ({})", e));
+    let (uname_data, kernel_data) = match kernel::get_uname_data() {
+        Ok(data) => (data.uname, data.kernel_version),
+        Err(e) =>{
+            eprintln!("Error: {}", e);
+            ("Unknown".into(), "Unknown".into())
+        }
+    };
 
     let username = match username::get_username() {
         Ok(name) => name,
@@ -71,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let host_line = format!("{}{}:    {}", host_icon.color(icon_color), "Host".color(main_color).style(main_style), host.color(info_color).style(info_style));
 
-    let kernel_line = format!("{}{}:  {}", kernel_icon.color(icon_color), "Kernel".color(main_color).style(main_style), kernel.color(info_color).style(info_style));
+    let kernel_line = format!("{}{}:  {} {}", kernel_icon.color(icon_color), "Kernel".color(main_color).style(main_style), uname_data.color(info_color).style(info_style), kernel_data.color(info_color).style(info_style));
 
     let mut items = vec![
         (cfg.position.host_order, host_line),
