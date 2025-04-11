@@ -4,6 +4,7 @@ mod username;
 mod oschecker;
 mod host;
 mod kernel;
+mod uptime;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
@@ -30,6 +31,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
+    let uptime_icon = if cfg.icons_enabled() {
+        "\u{f58f} "
+    } else {
+        ""
+    };
+
     let host = get_device_info();
 
     let mut my_host = String::new();
@@ -43,6 +50,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let icon_color = cfg.get_icon_color();
 
     let os_info: String = oschecker::get_os_info()?;
+
+    let uptime_result = uptime::get_uptime();
+
+    let uptime = match uptime_result {
+        Ok(value) => value,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            return Err(e.into());
+        }
+    };
 
     let (uname_data, kernel_data) = match kernel::get_uname_data() {
         Ok(data) => (data.uname, data.kernel_version),
@@ -78,10 +95,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let kernel_line = format!("{}{}:  {} {}", kernel_icon.color(icon_color), "Kernel".color(main_color).style(main_style), uname_data.color(info_color).style(info_style), kernel_data.color(info_color).style(info_style));
 
+    let uptime_line = format!("{}{}:  {}", uptime_icon.color(icon_color), "Uptime".color(main_color).style(main_style), uptime.color(info_color).style(info_style));
+
     let mut items = vec![
         (cfg.position.host_order, host_line),
         (cfg.position.os_order, os_line),
         (cfg.position.kernel_order, kernel_line),
+        (cfg.position.uptime_order, uptime_line),
     ];
 
     items.retain(|(order, _)| *order > 0);
