@@ -44,7 +44,8 @@ pub struct HostStyle {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Position {
     pub os_order: u8,
-    pub host_order: u8
+    pub host_order: u8,
+    pub kernel_order: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -152,7 +153,8 @@ impl Default for Config {
             },
             position: Position {
                 os_order: 1,
-                host_order: 2
+                host_order: 2,
+                kernel_order: 3,
             },
             info: InfoStyle {
                 main_color: "white".into(),
@@ -188,6 +190,7 @@ styles = ["bold"]
 [position]
 os_order = 1
 host_order = 2
+kernel_order = 3
 
 [info]
 main_color = "white"
