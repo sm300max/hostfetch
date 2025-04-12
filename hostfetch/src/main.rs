@@ -5,6 +5,7 @@ mod oschecker;
 mod host;
 mod kernel;
 mod uptime;
+mod load_average;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
@@ -32,7 +33,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let uptime_icon = if cfg.icons_enabled() {
-        "\u{f58f} "
+        "\u{f43a} "
+    } else {
+        ""
+    };
+
+    let load_average_icon = if cfg.icons_enabled() {
+        "\u{231b}"
     } else {
         ""
     };
@@ -52,6 +59,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let os_info: String = oschecker::get_os_info()?;
 
     let uptime_result = uptime::get_uptime();
+
+    let load_info = load_average::get_loadavg_string();
 
     let uptime = match uptime_result {
         Ok(value) => value,
@@ -79,29 +88,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match hostname::get_hostname(&mut my_host) {
         Ok(()) => println!(
-            "{}@{}", 
+            " {}@{}", 
             username.color(host_color).style(host_styles),
             my_host.color(host_color).style(host_styles)
         ),
         Err(e) => eprintln!("Error getting hostname: {}", e),
     }
 
+
     let separator = "-".repeat(username.len() + my_host.len() + 1);
-    println!("{}", separator.color(host_color));
+    println!(" {}", separator.color(host_color));
 
-    let os_line = format!("{}{}:      {}",os_icon.color(icon_color), "OS".color(main_color).style(main_style), os_info.color(info_color).style(info_style));
+    let os_line = format!(" {}{}:              {}",os_icon.color(icon_color), "OS".color(main_color).style(main_style), os_info.color(info_color).style(info_style));
 
-    let host_line = format!("{}{}:    {}", host_icon.color(icon_color), "Host".color(main_color).style(main_style), host.color(info_color).style(info_style));
+    let host_line = format!(" {}{}:            {}", host_icon.color(icon_color), "Host".color(main_color).style(main_style), host.color(info_color).style(info_style));
 
-    let kernel_line = format!("{}{}:  {} {}", kernel_icon.color(icon_color), "Kernel".color(main_color).style(main_style), uname_data.color(info_color).style(info_style), kernel_data.color(info_color).style(info_style));
+    let kernel_line = format!(" {}{}:          {} {}", kernel_icon.color(icon_color), "Kernel".color(main_color).style(main_style), uname_data.color(info_color).style(info_style), kernel_data.color(info_color).style(info_style));
 
-    let uptime_line = format!("{}{}:  {}", uptime_icon.color(icon_color), "Uptime".color(main_color).style(main_style), uptime.color(info_color).style(info_style));
+    let uptime_line = format!(" {}{}:          {}", uptime_icon.color(icon_color), "Uptime".color(main_color).style(main_style), uptime.color(info_color).style(info_style));
+
+    let load_average_line = format!(" {}{}:    {}",load_average_icon.color(icon_color), "Load Average".color(main_color).style(main_style), load_info.color(info_color).style(info_style));
 
     let mut items = vec![
         (cfg.position.host_order, host_line),
         (cfg.position.os_order, os_line),
         (cfg.position.kernel_order, kernel_line),
         (cfg.position.uptime_order, uptime_line),
+        (cfg.position.load_average_order, load_average_line),
     ];
 
     items.retain(|(order, _)| *order > 0);

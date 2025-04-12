@@ -47,6 +47,7 @@ pub struct Position {
     pub host_order: u8,
     pub kernel_order: u8,
     pub uptime_order: u8,
+    pub load_average_order: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -157,6 +158,7 @@ impl Default for Config {
                 host_order: 2,
                 kernel_order: 3,
                 uptime_order: 4,
+                load_average_order: 5,
             },
             info: InfoStyle {
                 main_color: "white".into(),
@@ -195,6 +197,7 @@ os_order = 1
 host_order = 2
 kernel_order = 3
 uptime_order = 4
+load_average_order = 5
 
 [info]
 main_color = "white"
