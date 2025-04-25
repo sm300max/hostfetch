@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let load_average_icon = if cfg.icons_enabled() {
-        "\u{231b}"
+        "\u{23f2} "
     } else {
         ""
     };
