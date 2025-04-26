@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let uptime_result = uptime::get_uptime();
 
-    let load_info = load_average::get_loadavg_string();
+    let load_info = load_average::get_loadavg();
 
     let uptime = match uptime_result {
         Ok(value) => value,
