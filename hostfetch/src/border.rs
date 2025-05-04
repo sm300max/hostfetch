@@ -1,21 +1,33 @@
-// frame.rs
-use crossterm::Result;
-use std::io::Write;
+use lazy_static::lazy_static;
+use regex::Regex;
 
-pub fn draw_rounded_frame<W: Write>(stdout: &mut W, text: &str) -> Result<()> {
-    let width = text.len() + 4; 
-    let height = 5; 
+lazy_static! {
+    static ref ANSI_ESCAPE: Regex = Regex::new(r"\x1B\[[0-9;]*[a-zA-Z]").unwrap();
+}
 
-    writeln!(stdout, "╭{}╮", "─".repeat(width - 2))?;
+fn visible_length(s: &str) -> usize {
+    ANSI_ESCAPE.replace_all(s, "").chars().count() 
+}
 
-    writeln!(stdout, "│ {} │", text)?;
-
-    for _ in 0..height - 3 {
-        writeln!(stdout, "│{}│", " ".repeat(width - 2))?;
+pub fn draw_border(lines: &[String]) {
+    if lines.is_empty() {
+        return;
     }
 
-    writeln!(stdout, "╰{}╯", "─".repeat(width - 2))?;
+    let max_length = lines
+        .iter()
+        .map(|line| visible_length(line))
+        .max()
+        .unwrap_or(0);
 
-    stdout.flush()?;
-    Ok(())
+    let top_border = format!("╭─{}─╮", "─".repeat(max_length));
+    let bottom_border = format!("╰─{}─╯", "─".repeat(max_length));
+
+    println!("{}", top_border);
+    for line in lines {
+        let visible_len = visible_length(line);
+        let padding = max_length - visible_len;
+        println!("│ {}{} │", line, " ".repeat(padding));
+    }
+    println!("{}", bottom_border);
 }
