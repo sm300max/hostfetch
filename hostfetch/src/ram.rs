@@ -1,35 +1,53 @@
-use sysinfo::{RefreshKind, System, MemoryRefreshKind};
+use sysinfo::{MemoryRefreshKind, RefreshKind, System};
 
-pub fn get_memory_usage() -> String {
-    let mut sys = System::new_with_specifics(
-        RefreshKind::new().with_memory(
-            MemoryRefreshKind::new().with_ram() // Явно запрашиваем обновление RAM
-        )
-    );
-    
-    sys.refresh_memory();
-    
-    let total = sys.total_memory();
-    let used = sys.used_memory();
+const BOLD: &str = "\x1b[1m";
+const GREEN: &str = "\x1b[32m";
+const YELLOW: &str = "\x1b[33m";
+const RED: &str = "\x1b[31m";
+const RESET: &str = "\x1b[0m";
 
-    format_memory(used, total)
+pub struct MemoryData {
+    used_bytes: u64,
+    total_bytes: u64,
+    percent: f64,
 }
 
-fn format_memory(used: u64, total: u64) -> String {
-    const UNIT_GB: u64 = 1024 * 1024 * 1024;
-    const UNIT_MB: u64 = 1024 * 1024;
+impl MemoryData {
+    pub fn new() -> Self {
+        let mut sys = System::new_with_specifics(
+            RefreshKind::new().with_memory(MemoryRefreshKind::new().with_ram())
+        );
+        sys.refresh_memory();
+        
+        let total = sys.total_memory();
+        let used = sys.used_memory();
+        let percent = if total > 0 {
+            (used as f64 / total as f64) * 100.0
+        } else {
+            0.0
+        };
 
-    let (total_value, unit) = if total >= UNIT_GB {
-        (total as f64 / UNIT_GB as f64, "GB")
-    } else {
-        (total as f64 / UNIT_MB as f64, "MB")
-    };
+        MemoryData {
+            used_bytes: used,
+            total_bytes: total,
+            percent,
+        }
+    }
 
-    let used_value = if total >= UNIT_GB {
-        used as f64 / UNIT_GB as f64
-    } else {
-        used as f64 / UNIT_MB as f64
-    };
+    pub fn formatted_usage(&self) -> String {
+        format!(
+            "{:.1} GB / {:.1} GB",
+            self.used_bytes as f64 / 1e9,
+            self.total_bytes as f64 / 1e9
+        )
+    }
 
-    format!("{:.1} {} / {:.1} {}", used_value, unit, total_value, unit)
+    pub fn formatted_percent(&self) -> String {
+        let color = match self.percent {
+            p if p < 50.0 => GREEN,
+            p if p < 75.0 => YELLOW,
+            _ => RED,
+        };
+        format!("{}{}{BOLD}{:.1}%{}", color, BOLD, self.percent, RESET)
+    }
 }

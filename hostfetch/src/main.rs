@@ -84,6 +84,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
+    let ram_icon = if cfg.icons_enabled() {
+        "\u{f035b} "
+    } else {
+        ""
+    };
+
     let host = get_device_info();
     let mut my_host = String::new();
 
@@ -98,6 +104,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let os_info: String = oschecker::get_os_info()?;
     let uptime_result = uptime::get_uptime();
     let load_info = load_average::get_loadavg();
+    let mem = ram::MemoryData::new();
+    let ram_usage = mem.formatted_usage();
+    let ram_percent = mem.formatted_percent();
 
     let uptime = match uptime_result {
         Ok(value) => value,
@@ -125,7 +134,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match hostname::get_hostname(&mut my_host) {
         Ok(()) => output_lines.push(format!(
-            " {}@{}",
+            "{}@{}",
             username.color(host_color).style(host_styles),
             my_host.color(host_color).style(host_styles)
         )),
@@ -133,24 +142,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let separator = "-".repeat(visible_length(&format!("{}@{}", username, my_host)));
-    output_lines.push(format!(" {}", separator.color(host_color)));
+    output_lines.push(format!("{}", separator.color(host_color)));
 
     let os_line = format!(
-        " {}{}:              {}",
+        "{}{}:              {}",
         os_icon.color(icon_color),
         "OS".color(main_color).style(main_style),
         os_info.color(info_color).style(info_style)
     );
 
     let host_line = format!(
-        " {}{}:            {}",
+        "{}{}:            {}",
         host_icon.color(icon_color),
         "Host".color(main_color).style(main_style),
         host.color(info_color).style(info_style)
     );
 
     let kernel_line = format!(
-        " {}{}:          {} {}",
+        "{}{}:          {} {}",
         kernel_icon.color(icon_color),
         "Kernel".color(main_color).style(main_style),
         uname_data.color(info_color).style(info_style),
@@ -158,17 +167,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let uptime_line = format!(
-        " {}{}:          {}",
+        "{}{}:          {}",
         uptime_icon.color(icon_color),
         "Uptime".color(main_color).style(main_style),
         uptime.color(info_color).style(info_style)
     );
 
     let load_average_line = format!(
-        " {}{}:    {}",
+        "{}{}:    {}",
         load_average_icon.color(icon_color),
         "Load Average".color(main_color).style(main_style),
         load_info.color(info_color).style(info_style)
+    );
+
+    let ram_line = format!("{}{}:             {} ({})", 
+        ram_icon.color(icon_color), 
+        "RAM".color(main_color).style(main_style), 
+        ram_usage.color(info_color).style(info_style), 
+        ram_percent
     );
 
     let mut items = vec![
@@ -177,6 +193,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (cfg.position.kernel_order, kernel_line),
         (cfg.position.uptime_order, uptime_line),
         (cfg.position.load_average_order, load_average_line),
+        (cfg.position.ram_order, ram_line),
     ];
 
     items.retain(|(order, _)| *order > 0);
@@ -187,8 +204,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     draw_border(&output_lines, cfg.border_color());
-
-    println!("RAM: {}", ram::get_memory_usage());
 
     Ok(())
 }
