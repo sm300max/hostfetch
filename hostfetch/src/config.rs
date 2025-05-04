@@ -58,6 +58,7 @@ pub struct InfoStyle {
     pub secondary_color: String,
     #[serde(default)]
     pub secondary_styles: Vec<String>,
+    pub border_color: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -97,6 +98,10 @@ impl Config {
 
     pub fn icons_enabled(&self) -> bool {
         self.icons.enabled
+    }
+
+    pub fn border_color(&self) -> Color {
+        self.parse_color(&self.info.border_color)
     }
 
     fn parse_color(&self, color_str: &str) -> Color {
@@ -165,6 +170,7 @@ impl Default for Config {
                 main_styles: vec!["italic".into()],
                 secondary_color: "blue".into(),
                 secondary_styles: vec!["bold".into()],
+                border_color: "blue".into(),
             },
             icons: IconStyle {
                 color: "green".into(),
@@ -204,6 +210,7 @@ main_color = "white"
 main_styles = ["italic"]
 secondary_color = "blue"
 secondary_styles = ["bold"]
+border_color = "blue"
 
 [icons]
 enabled = true

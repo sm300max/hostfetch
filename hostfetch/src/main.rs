@@ -1,4 +1,3 @@
-mod border;
 mod config;
 mod hostname;
 mod username;
@@ -7,20 +6,83 @@ mod host;
 mod kernel;
 mod uptime;
 mod load_average;
+mod ram;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
 use host::get_device_info;
+use lazy_static::lazy_static;
+use regex::Regex;
+
+lazy_static! {
+    static ref ANSI_ESCAPE: Regex = Regex::new(r"\x1B\[[0-9;]*[a-zA-Z]").unwrap();
+}
+
+fn visible_length(s: &str) -> usize {
+    ANSI_ESCAPE.replace_all(s, "").chars().count()
+}
+
+fn draw_border(lines: &[String], color: colored::Color) {
+    if lines.is_empty() {
+        return;
+    }
+
+    let max_length = lines
+        .iter()
+        .map(|line| visible_length(line))
+        .max()
+        .unwrap_or(0);
+
+    let top = format!("╭─{}─╮", "─".repeat(max_length)).color(color);
+    let bottom = format!("╰─{}─╯", "─".repeat(max_length)).color(color);
+
+    println!("{}", top);
+    for line in lines {
+        let padding = max_length - visible_length(line);
+        println!(
+            "{} {}{} {}",
+            "│".color(color),
+            line,
+            " ".repeat(padding),
+            "│".color(color)
+        );
+    }
+    println!("{}", bottom);
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = load_or_create()?;
     let mut output_lines = Vec::new();
 
-    let os_icon = if cfg.icons_enabled() { "\u{f31a} " } else { "" };
-    let host_icon = if cfg.icons_enabled() { "\u{f109} " } else { "" };
-    let kernel_icon = if cfg.icons_enabled() { "\u{f013} " } else { "" };
-    let uptime_icon = if cfg.icons_enabled() { "\u{f43a} " } else { "" };
-    let load_average_icon = if cfg.icons_enabled() { "\u{23f2} " } else { "" };
+    let os_icon = if cfg.icons_enabled() {
+        "\u{f31a} "
+    } else {
+        ""
+    };
+
+    let host_icon = if cfg.icons_enabled() {
+        "\u{f109} "
+    } else {
+        ""
+    };
+
+    let kernel_icon = if cfg.icons_enabled() {
+        "\u{f013} "
+    } else {
+        ""
+    };
+
+    let uptime_icon = if cfg.icons_enabled() {
+        "\u{f43a} "
+    } else {
+        ""
+    };
+
+    let load_average_icon = if cfg.icons_enabled() {
+        "\u{23f2} "
+    } else {
+        ""
+    };
 
     let host = get_device_info();
     let mut my_host = String::new();
@@ -62,24 +124,52 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     match hostname::get_hostname(&mut my_host) {
-        Ok(()) => {
-            output_lines.push(format!(
-                "{}@{}",
-                username.color(host_color).style(host_styles),
-                my_host.color(host_color).style(host_styles)
-            ));
-        }
+        Ok(()) => output_lines.push(format!(
+            " {}@{}",
+            username.color(host_color).style(host_styles),
+            my_host.color(host_color).style(host_styles)
+        )),
         Err(e) => eprintln!("Error getting hostname: {}", e),
     }
 
-    let separator = "-".repeat(username.len() + my_host.len() + 1);
-    output_lines.push(format!("{}", separator.color(host_color)));
+    let separator = "-".repeat(visible_length(&format!("{}@{}", username, my_host)));
+    output_lines.push(format!(" {}", separator.color(host_color)));
 
-    let os_line = format!("{}{}:              {}", os_icon.color(icon_color), "OS".color(main_color).style(main_style), os_info.color(info_color).style(info_style));
-    let host_line = format!("{}{}:            {}", host_icon.color(icon_color), "Host".color(main_color).style(main_style), host.color(info_color).style(info_style));
-    let kernel_line = format!("{}{}:          {} {}", kernel_icon.color(icon_color), "Kernel".color(main_color).style(main_style), uname_data.color(info_color).style(info_style), kernel_data.color(info_color).style(info_style));
-    let uptime_line = format!("{}{}:          {}", uptime_icon.color(icon_color), "Uptime".color(main_color).style(main_style), uptime.color(info_color).style(info_style));
-    let load_average_line = format!("{}{}:    {}", load_average_icon.color(icon_color), "Load Average".color(main_color).style(main_style), load_info.color(info_color).style(info_style));
+    let os_line = format!(
+        " {}{}:              {}",
+        os_icon.color(icon_color),
+        "OS".color(main_color).style(main_style),
+        os_info.color(info_color).style(info_style)
+    );
+
+    let host_line = format!(
+        " {}{}:            {}",
+        host_icon.color(icon_color),
+        "Host".color(main_color).style(main_style),
+        host.color(info_color).style(info_style)
+    );
+
+    let kernel_line = format!(
+        " {}{}:          {} {}",
+        kernel_icon.color(icon_color),
+        "Kernel".color(main_color).style(main_style),
+        uname_data.color(info_color).style(info_style),
+        kernel_data.color(info_color).style(info_style)
+    );
+
+    let uptime_line = format!(
+        " {}{}:          {}",
+        uptime_icon.color(icon_color),
+        "Uptime".color(main_color).style(main_style),
+        uptime.color(info_color).style(info_style)
+    );
+
+    let load_average_line = format!(
+        " {}{}:    {}",
+        load_average_icon.color(icon_color),
+        "Load Average".color(main_color).style(main_style),
+        load_info.color(info_color).style(info_style)
+    );
 
     let mut items = vec![
         (cfg.position.host_order, host_line),
@@ -96,7 +186,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         output_lines.push(line);
     }
 
-    border::draw_border(&output_lines);
+    draw_border(&output_lines, cfg.border_color());
+
+    println!("RAM: {}", ram::get_memory_usage());
 
     Ok(())
 }
