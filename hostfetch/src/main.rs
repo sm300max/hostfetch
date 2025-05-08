@@ -7,6 +7,7 @@ mod kernel;
 mod uptime;
 mod load_average;
 mod ram;
+mod swap;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
@@ -107,6 +108,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mem = ram::MemoryData::new();
     let ram_usage = mem.formatted_usage();
     let ram_percent = mem.formatted_percent();
+    let swap_data = swap::get_swap_info();
+
+    let (swap_usage, swap_percent) = match swap_data {
+        Some(data) => data,
+        None => {
+            ("No swap".to_string(), "(0%)".to_string())
+        }
+    };
 
     let uptime = match uptime_result {
         Ok(value) => value,
@@ -205,6 +214,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     draw_border(&output_lines, cfg.border_color());
+
+    println!("{} ({})", swap_usage, swap_percent);
 
     Ok(())
 }
