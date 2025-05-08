@@ -48,6 +48,6 @@ impl MemoryData {
             p if p < 75.0 => YELLOW,
             _ => RED,
         };
-        format!("{}{}{BOLD}{:.1}%{}", color, BOLD, self.percent, RESET)
+        format!("{}{}{BOLD}{:.0}%{}", color, BOLD, self.percent, RESET)
     }
 }
