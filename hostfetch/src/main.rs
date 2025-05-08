@@ -145,44 +145,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     output_lines.push(format!("{}", separator.color(host_color)));
 
     let os_line = format!(
-        "{}{}:              {}",
+        "{}{}              {}",
         os_icon.color(icon_color),
-        "OS".color(main_color).style(main_style),
+        "OS:".color(main_color).style(main_style),
         os_info.color(info_color).style(info_style)
     );
 
     let host_line = format!(
-        "{}{}:            {}",
+        "{}{}            {}",
         host_icon.color(icon_color),
-        "Host".color(main_color).style(main_style),
+        "Host:".color(main_color).style(main_style),
         host.color(info_color).style(info_style)
     );
 
     let kernel_line = format!(
-        "{}{}:          {} {}",
+        "{}{}          {} {}",
         kernel_icon.color(icon_color),
-        "Kernel".color(main_color).style(main_style),
+        "Kernel:".color(main_color).style(main_style),
         uname_data.color(info_color).style(info_style),
         kernel_data.color(info_color).style(info_style)
     );
 
     let uptime_line = format!(
-        "{}{}:          {}",
+        "{}{}          {}",
         uptime_icon.color(icon_color),
-        "Uptime".color(main_color).style(main_style),
+        "Uptime:".color(main_color).style(main_style),
         uptime.color(info_color).style(info_style)
     );
 
     let load_average_line = format!(
-        "{}{}:    {}",
+        "{}{}    {}",
         load_average_icon.color(icon_color),
-        "Load Average".color(main_color).style(main_style),
+        "Load Average:".color(main_color).style(main_style),
         load_info.color(info_color).style(info_style)
     );
 
-    let ram_line = format!("{}{}:             {} ({})", 
+    let ram_line = format!(
+        "{}{}             {} ({})", 
         ram_icon.color(icon_color), 
-        "RAM".color(main_color).style(main_style), 
+        "RAM:".color(main_color).style(main_style), 
         ram_usage.color(info_color).style(info_style), 
         ram_percent
     );
