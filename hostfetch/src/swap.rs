@@ -44,8 +44,8 @@ fn format_size(bytes: u64) -> String {
     }
 
     if size.fract() == 0.0 || unit_index == 0 {
-        format!("{:.0}{}", size, UNITS[unit_index])
+        format!("{:.0} {}", size, UNITS[unit_index])
     } else {
-        format!("{:.1}{}", size, UNITS[unit_index])
+        format!("{:.1} {}", size, UNITS[unit_index])
     }
 }
