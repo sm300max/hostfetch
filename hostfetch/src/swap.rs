@@ -18,10 +18,8 @@ pub fn get_swap_info() -> Option<(String, String)> {
     let percent = (used as f64 / total as f64) * 100.0;
     let percent_value = format!("{:.0}%", percent);
     
-    // Создаем стиль с жирным текстом
     let bold_style = Style::new().bold();
     
-    // Окрашиваем и делаем жирным в зависимости от значения
     let colored_percent = if percent <= 50.0 {
         percent_value.style(bold_style.green()).to_string()
     } else if percent <= 75.0 {
