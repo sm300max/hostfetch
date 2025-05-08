@@ -1,4 +1,5 @@
 use sysinfo::System;
+use owo_colors::{OwoColorize, Style};
 
 pub fn get_swap_info() -> Option<(String, String)> {
     let mut system = System::new();
@@ -13,9 +14,23 @@ pub fn get_swap_info() -> Option<(String, String)> {
 
     let used = total - free;
     let ratio = format!("{} / {}", format_size(used), format_size(total));
-    let percent = format!("{:.0}%", (used as f64 / total as f64) * 100.0);
+    
+    let percent = (used as f64 / total as f64) * 100.0;
+    let percent_value = format!("{:.0}%", percent);
+    
+    // Создаем стиль с жирным текстом
+    let bold_style = Style::new().bold();
+    
+    // Окрашиваем и делаем жирным в зависимости от значения
+    let colored_percent = if percent <= 50.0 {
+        percent_value.style(bold_style.green()).to_string()
+    } else if percent <= 75.0 {
+        percent_value.style(bold_style.yellow()).to_string()
+    } else {
+        percent_value.style(bold_style.red()).to_string()
+    };
 
-    Some((ratio, percent))
+    Some((ratio, colored_percent))
 }
 
 fn format_size(bytes: u64) -> String {

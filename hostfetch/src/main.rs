@@ -91,6 +91,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
+    let swap_icon = if cfg.icons_enabled() {
+        "\u{ebcb} "
+    } else {
+        ""
+    };
+
     let host = get_device_info();
     let mut my_host = String::new();
 
@@ -139,7 +145,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             eprintln!("Error getting username: {}", e);
             "unknown".to_string()
         }
-    };
+    };    println!("{}", swap_percent);
 
     match hostname::get_hostname(&mut my_host) {
         Ok(()) => output_lines.push(format!(
@@ -174,7 +180,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         uname_data.color(info_color).style(info_style),
         kernel_data.color(info_color).style(info_style)
     );
-
+    println!("{}", swap_percent);
     let uptime_line = format!(
         "{}{}          {}",
         uptime_icon.color(icon_color),
@@ -197,6 +203,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ram_percent
     );
 
+    let swap_line = format!(
+        "{}{}            {} ({})",
+        swap_icon.color(icon_color),
+        "Swap:".color(main_color).style(main_style),
+        swap_usage.color(info_color).style(info_style),
+        swap_percent
+    );
+
     let mut items = vec![
         (cfg.position.host_order, host_line),
         (cfg.position.os_order, os_line),
@@ -204,6 +218,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (cfg.position.uptime_order, uptime_line),
         (cfg.position.load_average_order, load_average_line),
         (cfg.position.ram_order, ram_line),
+        (cfg.position.swap_order, swap_line),
     ];
 
     items.retain(|(order, _)| *order > 0);
@@ -214,8 +229,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     draw_border(&output_lines, cfg.border_color());
-
-    println!("{} ({})", swap_usage, swap_percent);
 
     Ok(())
 }
