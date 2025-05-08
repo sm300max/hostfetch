@@ -45,6 +45,7 @@ pub struct HostStyle {
 pub struct Position {
     pub os_order: u8,
     pub host_order: u8,
+    pub terminal_order: u8,
     pub kernel_order: u8,
     pub uptime_order: u8,
     pub load_average_order: u8,
@@ -163,11 +164,12 @@ impl Default for Config {
             position: Position {
                 os_order: 1,
                 host_order: 2,
-                kernel_order: 3,
-                uptime_order: 4,
-                load_average_order: 5,
-                ram_order: 6,
-                swap_order: 7,
+                terminal_order: 3,
+                kernel_order: 4,
+                uptime_order: 5,
+                load_average_order: 6,
+                ram_order: 7,
+                swap_order: 8,
             },
             info: InfoStyle {
                 main_color: "white".into(),
@@ -205,11 +207,12 @@ styles = ["bold"]
 # set 0 to hide element
 os_order = 1
 host_order = 2
-kernel_order = 3
-uptime_order = 4
-load_average_order = 5
-ram_order = 6
-swap_order = 7
+terminal_order = 3
+kernel_order = 4
+uptime_order = 5
+load_average_order = 6
+ram_order = 7
+swap_order = 8
 
 [info]
 main_color = "white"

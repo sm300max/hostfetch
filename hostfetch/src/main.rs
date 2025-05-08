@@ -8,6 +8,7 @@ mod uptime;
 mod load_average;
 mod ram;
 mod swap;
+mod terminal;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
@@ -67,6 +68,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
+    let terminal_icon = if cfg.icons_enabled() {
+        "\u{f489} "
+    } else {
+        ""
+    };
+
     let kernel_icon = if cfg.icons_enabled() {
         "\u{f013} "
     } else {
@@ -115,6 +122,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ram_usage = mem.formatted_usage();
     let ram_percent = mem.formatted_percent();
     let swap_data = swap::get_swap_info();
+    let terminal = terminal::detect_terminal();
 
     let (swap_usage, swap_percent) = match swap_data {
         Some(data) => data,
@@ -145,7 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             eprintln!("Error getting username: {}", e);
             "unknown".to_string()
         }
-    };    println!("{}", swap_percent);
+    };
 
     match hostname::get_hostname(&mut my_host) {
         Ok(()) => output_lines.push(format!(
@@ -173,6 +181,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         host.color(info_color).style(info_style)
     );
 
+    let terminal_line = format!(
+        "{}{}        {}",
+        terminal_icon.color(icon_color),
+        "Terminal:".color(main_color).style(main_style),
+        terminal.color(info_color).style(info_style)
+    );
+
     let kernel_line = format!(
         "{}{}          {} {}",
         kernel_icon.color(icon_color),
@@ -180,7 +195,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         uname_data.color(info_color).style(info_style),
         kernel_data.color(info_color).style(info_style)
     );
-    println!("{}", swap_percent);
+
     let uptime_line = format!(
         "{}{}          {}",
         uptime_icon.color(icon_color),
@@ -214,6 +229,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut items = vec![
         (cfg.position.host_order, host_line),
         (cfg.position.os_order, os_line),
+        (cfg.position.terminal_order, terminal_line),
         (cfg.position.kernel_order, kernel_line),
         (cfg.position.uptime_order, uptime_line),
         (cfg.position.load_average_order, load_average_line),
