@@ -46,6 +46,7 @@ pub struct Position {
     pub os_order: u8,
     pub host_order: u8,
     pub terminal_order: u8,
+    pub shell_order: u8,
     pub kernel_order: u8,
     pub uptime_order: u8,
     pub load_average_order: u8,
@@ -165,11 +166,12 @@ impl Default for Config {
                 os_order: 1,
                 host_order: 2,
                 terminal_order: 3,
-                kernel_order: 4,
-                uptime_order: 5,
-                load_average_order: 6,
-                ram_order: 7,
-                swap_order: 8,
+                shell_order: 4,
+                kernel_order: 5,
+                uptime_order: 6,
+                load_average_order: 7,
+                ram_order: 8,
+                swap_order: 9,
             },
             info: InfoStyle {
                 main_color: "white".into(),
@@ -208,11 +210,12 @@ styles = ["bold"]
 os_order = 1
 host_order = 2
 terminal_order = 3
-kernel_order = 4
-uptime_order = 5
-load_average_order = 6
-ram_order = 7
-swap_order = 8
+shell_order = 4
+kernel_order = 5
+uptime_order = 6
+load_average_order = 7
+ram_order = 8
+swap_order = 9
 
 [info]
 main_color = "white"

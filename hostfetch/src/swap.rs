@@ -21,11 +21,20 @@ pub fn get_swap_info() -> Option<(String, String)> {
     let bold_style = Style::new().bold();
     
     let colored_percent = if percent <= 50.0 {
-        percent_value.style(bold_style.green()).to_string()
+        percent_value
+            .style(bold_style
+                .green())
+            .to_string()
     } else if percent <= 75.0 {
-        percent_value.style(bold_style.yellow()).to_string()
+        percent_value
+            .style(bold_style
+                .yellow())
+            .to_string()
     } else {
-        percent_value.style(bold_style.red()).to_string()
+        percent_value
+            .style(bold_style
+                .red())
+            .to_string()
     };
 
     Some((ratio, colored_percent))

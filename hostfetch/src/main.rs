@@ -9,6 +9,7 @@ mod load_average;
 mod ram;
 mod swap;
 mod terminal;
+mod shell;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
@@ -74,6 +75,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
+    let shell_icon = if cfg.icons_enabled() {
+        "\u{e691} "
+    } else {
+        ""
+    };
+
     let kernel_icon = if cfg.icons_enabled() {
         "\u{f013} "
     } else {
@@ -123,6 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ram_percent = mem.formatted_percent();
     let swap_data = swap::get_swap_info();
     let terminal = terminal::detect_terminal();
+    let shell_name = shell::get_shell_name();
 
     let (swap_usage, swap_percent) = match swap_data {
         Some(data) => data,
@@ -188,6 +196,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         terminal.color(info_color).style(info_style)
     );
 
+    let shell_line = format!(
+        "{}{}           {}",
+        shell_icon.color(icon_color),
+        "Shell:".color(main_color).style(main_style),
+        shell_name.color(info_color).style(info_style),
+    );
+
     let kernel_line = format!(
         "{}{}          {} {}",
         kernel_icon.color(icon_color),
@@ -230,6 +245,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (cfg.position.host_order, host_line),
         (cfg.position.os_order, os_line),
         (cfg.position.terminal_order, terminal_line),
+        (cfg.position.shell_order, shell_line),
         (cfg.position.kernel_order, kernel_line),
         (cfg.position.uptime_order, uptime_line),
         (cfg.position.load_average_order, load_average_line),
