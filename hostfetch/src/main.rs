@@ -53,9 +53,21 @@ fn draw_border(lines: &[String], color: colored::Color) {
     println!("{}", bottom);
 }
 
+fn draw_centered_border(content: &str, color: colored::Color, max_width: usize) {
+    let content_len = visible_length(content);
+    let padding = (max_width.saturating_sub(content_len)) / 2;
+    let line = format!(
+        "{}{}{}",
+        " ".repeat(padding),
+        content,
+        " ".repeat(max_width - content_len - padding)
+    );
+    draw_border(&[line], color);
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = load_or_create()?;
-    let mut output_lines = Vec::new();
+    let mut all_lines = Vec::new();
 
     let os_icon = if cfg.icons_enabled() {
         "\u{f31a} "
@@ -164,16 +176,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     match hostname::get_hostname(&mut my_host) {
-        Ok(()) => output_lines.push(format!(
-            "{}@{}",
-            username.color(host_color).style(host_styles),
-            my_host.color(host_color).style(host_styles)
-        )),
+        Ok(()) => {
+            let user_host = format!(
+                "{}@{}",
+                username.color(host_color).style(host_styles),
+                my_host.color(host_color).style(host_styles)
+            );
+            all_lines.push(user_host);
+        },
         Err(e) => eprintln!("Error getting hostname: {}", e),
     }
-
-    let separator = "-".repeat(visible_length(&format!("{}@{}", username, my_host)));
-    output_lines.push(format!("{}", separator.color(host_color)));
 
     let os_line = format!(
         "{}{}              {}",
@@ -226,10 +238,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let ram_line = format!(
-        "{}{}             {} ({})", 
-        ram_icon.color(icon_color), 
-        "RAM:".color(main_color).style(main_style), 
-        ram_usage.color(info_color).style(info_style), 
+        "{}{}             {} ({})",
+        ram_icon.color(icon_color),
+        "RAM:".color(main_color).style(main_style),
+        ram_usage.color(info_color).style(info_style),
         ram_percent
     );
 
@@ -257,10 +269,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     items.sort_by_key(|(order, _)| *order);
 
     for (_, line) in items {
-        output_lines.push(line);
+        all_lines.push(line);
     }
 
-    draw_border(&output_lines, cfg.border_color());
+    let max_length = all_lines
+        .iter()
+        .map(|line| visible_length(line))
+        .max()
+        .unwrap_or(0);
+
+    let mut system_lines = Vec::new();
+    for line in all_lines.iter().skip(1) {
+        system_lines.push(line.clone());
+    }
+
+    let border_color = cfg.border_color();
+
+    if !all_lines.is_empty() {
+        let user_host = all_lines[0].clone();
+        draw_centered_border(&user_host, host_color, max_length);
+    }
+
+    if !system_lines.is_empty() {
+        draw_border(&system_lines, border_color);
+    }
+
 
     Ok(())
 }
