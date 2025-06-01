@@ -52,6 +52,7 @@ pub struct Position {
     pub load_average_order: u8,
     pub ram_order: u8,
     pub swap_order: u8,
+    pub locale_order: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -172,6 +173,7 @@ impl Default for Config {
                 load_average_order: 7,
                 ram_order: 8,
                 swap_order: 9,
+                locale_order: 10,
             },
             info: InfoStyle {
                 main_color: "white".into(),
@@ -216,6 +218,7 @@ uptime_order = 6
 load_average_order = 7
 ram_order = 8
 swap_order = 9
+locale_order = 10
 
 [info]
 main_color = "white"

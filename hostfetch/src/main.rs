@@ -10,6 +10,7 @@ mod ram;
 mod swap;
 mod terminal;
 mod shell;
+mod locale;
 
 use colored::Colorize;
 use config::{load_or_create, Stylize};
@@ -123,6 +124,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
+    let locale_icon = if cfg.icons_enabled() {
+        "\u{f274} "
+    } else {
+        ""
+    };
+
     let host = get_device_info();
     let mut my_host = String::new();
 
@@ -143,6 +150,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let swap_data = swap::get_swap_info();
     let terminal = terminal::detect_terminal();
     let shell_name = shell::get_shell_name();
+    let locale_result = locale::get_locale();
 
     let (swap_usage, swap_percent) = match swap_data {
         Some(data) => data,
@@ -152,6 +160,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let uptime = match uptime_result {
+        Ok(value) => value,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            return Err(e.into());
+        }
+    };
+
+    let locale = match locale_result {
         Ok(value) => value,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -253,6 +269,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         swap_percent
     );
 
+    let locale_line = format!(
+        "{}{}          {}",
+        locale_icon.color(icon_color),
+        "Locale:".color(main_color).style(main_style),
+        locale.color(info_color).style(info_style)
+    );
+
     let mut items = vec![
         (cfg.position.host_order, host_line),
         (cfg.position.os_order, os_line),
@@ -263,6 +286,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (cfg.position.load_average_order, load_average_line),
         (cfg.position.ram_order, ram_line),
         (cfg.position.swap_order, swap_line),
+        (cfg.position.locale_order, locale_line),
     ];
 
     items.retain(|(order, _)| *order > 0);

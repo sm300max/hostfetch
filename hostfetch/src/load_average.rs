@@ -4,7 +4,7 @@ use std::fs;
 pub fn get_loadavg() -> String {
     let output = Command::new("sh")
         .arg("-c")
-        .arg(r#"uptime 2>/dev/null | awk -F 'load average: ' '{print $2}' | tr -d ','"#)
+        .arg(r#"LC_ALL=C uptime 2>/dev/null | awk -F 'load average: ' '{print $2}' | tr -d ','"#)
         .output();
 
     if let Ok(output) = output {
