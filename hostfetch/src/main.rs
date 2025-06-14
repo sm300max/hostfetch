@@ -70,6 +70,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = load_or_create()?;
     let mut all_lines = Vec::new();
 
+    //icons
+
     let os_icon = if cfg.icons_enabled() {
         "\u{f31a} "
     } else {
@@ -130,15 +132,139 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ""
     };
 
+    //names
+
+    let os_name = if cfg.names_enabled() {
+        "OS:"
+    } else {
+        ":"
+    };
+
+    let host_name = if cfg.names_enabled() {
+        "Host:"
+    } else {
+        ":"
+    };
+
+    let terminal_name = if cfg.names_enabled() {
+        "Terminal:"
+    } else {
+        ":"
+    };
+
+    let shell_name = if cfg.names_enabled() {
+        "Shell:"
+    } else {
+        ":"
+    };
+
+    let kernel_name = if cfg.names_enabled() {
+        "Kernel:"
+    } else {
+        ":"
+    };
+
+    let uptime_name = if cfg.names_enabled() {
+        "Uptime:"
+    } else {
+        ":"
+    };
+
+    let load_average_name = if cfg.names_enabled() {
+        "Load Average:"
+    } else {
+        ":"
+    };
+
+    let ram_name = if cfg.names_enabled() {
+        "RAM:"
+    } else {
+        ":"
+    };
+
+    let swap_name = if cfg.names_enabled() {
+        "Swap:"
+    } else {
+        ":"
+    };
+
+    let locale_name = if cfg.names_enabled() {
+        "Locale:"
+    } else {
+        ":"
+    };
+
+    //space
+
+    let os_space = if cfg.names_enabled() {
+        "              "
+    } else {
+        " "
+    };
+
+    let host_space = if cfg.names_enabled() {
+        "            "
+    } else {
+        " "
+    };
+
+    let terminal_space = if cfg.names_enabled() {
+        "        "
+    } else {
+        " "
+    };
+
+    let shell_space = if cfg.names_enabled() {
+        "           "
+    } else {
+        " "
+    };
+
+    let kernel_space = if cfg.names_enabled() {
+        "          "
+    } else {
+        " "
+    };
+
+    let uptime_space = if cfg.names_enabled() {
+        "          "
+    } else {
+        " "
+    };
+
+    let load_average_space = if cfg.names_enabled() {
+        "    "
+    } else {
+        " "
+    };
+
+    let ram_space = if cfg.names_enabled() {
+        "             "
+    } else {
+        " "
+    };
+
+    let swap_space = if cfg.names_enabled() {
+        "            "
+    } else {
+        " "
+    };
+
+    let locale_space = if cfg.names_enabled() {
+        "          "
+    } else {
+        " "
+    };
+
     let host = get_device_info();
     let mut my_host = String::new();
 
-    let main_color = cfg.get_main_color();
-    let main_style = cfg.get_main_styles();
-    let info_color = cfg.get_secondary_color();
-    let info_style = cfg.get_secondary_styles();
+    let name_color = cfg.get_name_color();
+    let name_style = cfg.get_name_styles();
+    let info_color = cfg.get_info_color();
+    let info_style = cfg.get_info_styles();
     let host_color = cfg.get_host_color();
-    let host_styles = cfg.get_host_styles();
+    let host_style = cfg.get_host_styles();
     let icon_color = cfg.get_icon_color();
 
     let os_info: String = oschecker::get_os_info()?;
@@ -149,7 +275,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ram_percent = mem.formatted_percent();
     let swap_data = swap::get_swap_info();
     let terminal = terminal::detect_terminal();
-    let shell_name = shell::get_shell_name();
+    let shell_info = shell::get_shell_name();
     let locale_result = locale::get_locale();
 
     let (swap_usage, swap_percent) = match swap_data {
@@ -195,8 +321,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(()) => {
             let user_host = format!(
                 "{}@{}",
-                username.color(host_color).style(host_styles),
-                my_host.color(host_color).style(host_styles)
+                username.color(host_color).style(host_style),
+                my_host.color(host_color).style(host_style)
             );
             all_lines.push(user_host);
         },
@@ -204,75 +330,85 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let os_line = format!(
-        "{}{}              {}",
+        "{}{}{}{}",
         os_icon.color(icon_color),
-        "OS:".color(main_color).style(main_style),
+        os_name.color(name_color).style(name_style),
+        os_space,
         os_info.color(info_color).style(info_style)
-    );
+    );            
 
     let host_line = format!(
-        "{}{}            {}",
+        "{}{}{}{}",
         host_icon.color(icon_color),
-        "Host:".color(main_color).style(main_style),
+        host_name.color(name_color).style(name_style),
+        host_space,
         host.color(info_color).style(info_style)
     );
 
     let terminal_line = format!(
-        "{}{}        {}",
+        "{}{}{}{}",
         terminal_icon.color(icon_color),
-        "Terminal:".color(main_color).style(main_style),
+        terminal_name.color(name_color).style(name_style),
+        terminal_space,
         terminal.color(info_color).style(info_style)
     );
 
     let shell_line = format!(
-        "{}{}           {}",
+        "{}{}{}{}",
         shell_icon.color(icon_color),
-        "Shell:".color(main_color).style(main_style),
-        shell_name.color(info_color).style(info_style),
+        shell_name.color(name_color).style(name_style),
+        shell_space,
+        shell_info.color(info_color).style(info_style),
     );
 
     let kernel_line = format!(
-        "{}{}          {} {}",
+        "{}{}{}{} {}",
         kernel_icon.color(icon_color),
-        "Kernel:".color(main_color).style(main_style),
+        kernel_name.color(name_color).style(name_style),
+        kernel_space,
         uname_data.color(info_color).style(info_style),
         kernel_data.color(info_color).style(info_style)
-    );
+    );          
 
     let uptime_line = format!(
-        "{}{}          {}",
+        "{}{}{}{}",
         uptime_icon.color(icon_color),
-        "Uptime:".color(main_color).style(main_style),
+        uptime_name.color(name_color).style(name_style),
+        uptime_space,
         uptime.color(info_color).style(info_style)
     );
 
     let load_average_line = format!(
-        "{}{}    {}",
+        "{}{}{}{}",
         load_average_icon.color(icon_color),
-        "Load Average:".color(main_color).style(main_style),
+        load_average_name.color(name_color).style(name_style),
+        load_average_space,
         load_info.color(info_color).style(info_style)
     );
 
     let ram_line = format!(
-        "{}{}             {} ({})",
+        "{}{}{}{} ({})",
         ram_icon.color(icon_color),
-        "RAM:".color(main_color).style(main_style),
+        ram_name.color(name_color).style(name_style),
+        ram_space,
         ram_usage.color(info_color).style(info_style),
         ram_percent
     );
 
     let swap_line = format!(
-        "{}{}            {} ({})",
+        "{}{}{}{} ({})",
         swap_icon.color(icon_color),
-        "Swap:".color(main_color).style(main_style),
+        swap_name.color(name_color).style(name_style),
+        swap_space,
         swap_usage.color(info_color).style(info_style),
         swap_percent
     );
 
     let locale_line = format!(
-        "{}{}          {}",
+        "{}{}{}{}",
         locale_icon.color(icon_color),
-        "Locale:".color(main_color).style(main_style),
+        locale_name.color(name_color).style(name_style),
+        locale_space,
         locale.color(info_color).style(info_style)
     );
 

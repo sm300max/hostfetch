@@ -57,12 +57,13 @@ pub struct Position {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfoStyle {
-    pub main_color: String,
+    pub names_enabled: bool,
+    pub name_color: String,
     #[serde(default)]
-    pub main_styles: Vec<String>,
-    pub secondary_color: String,
+    pub name_styles: Vec<String>,
+    pub info_color: String,
     #[serde(default)]
-    pub secondary_styles: Vec<String>,
+    pub info_styles: Vec<String>,
     pub border_color: String,
 }
 
@@ -73,20 +74,25 @@ pub struct IconStyle {
 }
 
 impl Config {
-    pub fn get_main_color(&self) -> Color {
-        self.parse_color(&self.info.main_color)
+
+    pub fn names_enabled(&self) -> bool {
+        self.info.names_enabled
     }
 
-    pub fn get_main_styles(&self) -> &Vec<String> {
-        &self.info.main_styles
+    pub fn get_name_color(&self) -> Color {
+        self.parse_color(&self.info.name_color)
     }
 
-    pub fn get_secondary_color(&self) -> Color {
-        self.parse_color(&self.info.secondary_color)
+    pub fn get_name_styles(&self) -> &Vec<String> {
+        &self.info.name_styles
     }
 
-    pub fn get_secondary_styles(&self) -> &Vec<String> {
-        &self.info.secondary_styles
+    pub fn get_info_color(&self) -> Color {
+        self.parse_color(&self.info.info_color)
+    }
+
+    pub fn get_info_styles(&self) -> &Vec<String> {
+        &self.info.info_styles
     }
 
     pub fn get_host_color(&self) -> Color {
@@ -176,10 +182,11 @@ impl Default for Config {
                 locale_order: 10,
             },
             info: InfoStyle {
-                main_color: "white".into(),
-                main_styles: vec!["italic".into()],
-                secondary_color: "blue".into(),
-                secondary_styles: vec!["bold".into()],
+                names_enabled: true,
+                name_color: "white".into(),
+                name_styles: vec!["italic".into()],
+                info_color: "blue".into(),
+                info_styles: vec!["bold".into()],
                 border_color: "blue".into(),
             },
             icons: IconStyle {
@@ -221,10 +228,11 @@ swap_order = 9
 locale_order = 10
 
 [info]
-main_color = "white"
-main_styles = ["italic"]
-secondary_color = "blue"
-secondary_styles = ["bold"]
+names_enabled = true
+name_color = "white"
+name_styles = ["italic"]
+info_color = "blue"
+info_styles = ["bold"]
 border_color = "blue"
 
 [icons]
